@@ -207,7 +207,7 @@ template <>
 /* clang-format on */
 file_reader_t<snappy_reader_t>::~file_reader_t<snappy_reader_t>()
 {
-    // Empty.
+    delete[] thread_eof_;
 }
 
 template <>
