@@ -44,6 +44,7 @@
 #define _TRACE_ENTRY_H_ 1
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "utils.h"
 
 /**
@@ -433,6 +434,8 @@ struct _trace_entry_t {
     // 2 bytes: mem ref size, instr length, or num of instrs for instr bundle,
     // or marker sub-type.
     unsigned short size;
+    int8_t tag_cheri;
+    bool cap_access;
     union {
         addr_t addr; // 4/8 bytes: mem ref addr, instr pc, tid, pid, marker val
         // The length of each instr in the instr bundle

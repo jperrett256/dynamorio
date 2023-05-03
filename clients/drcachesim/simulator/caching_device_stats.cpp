@@ -38,7 +38,7 @@
 
 caching_device_stats_t::caching_device_stats_t(const std::string &miss_file,
                                                int block_size, bool warmup_enabled,
-                                               bool is_coherent)
+                                               bool is_coherent, tag_table_t *tag_table)
     : success_(true)
     , num_hits_(0)
     , num_misses_(0)
@@ -51,17 +51,27 @@ caching_device_stats_t::caching_device_stats_t(const std::string &miss_file,
     , num_child_hits_at_reset_(0)
     , warmup_enabled_(warmup_enabled)
     , is_coherent_(is_coherent)
+    , tag_table_(tag_table)
+    , block_size_(block_size)
     , access_count_(block_size)
     , file_(nullptr)
 {
     if (miss_file.empty()) {
         dump_misses_ = false;
     } else {
+        if (tag_table_) {
 #ifdef HAS_ZLIB
-        file_ = gzopen(miss_file.c_str(), "w");
+            file_ = gzopen(miss_file.c_str(), "wb");
 #else
-        file_ = fopen(miss_file.c_str(), "w");
+            file_ = fopen(miss_file.c_str(), "wb");
 #endif
+        } else {
+#ifdef HAS_ZLIB
+            file_ = gzopen(miss_file.c_str(), "w");
+#else
+            file_ = fopen(miss_file.c_str(), "w");
+#endif
+        }
         if (file_ == nullptr) {
             dump_misses_ = false;
             success_ = false;
@@ -143,11 +153,21 @@ caching_device_stats_t::dump_miss(const memref_t &memref)
         pc = memref.data.pc;
     }
     addr = memref.data.addr;
+
+    if (tag_table_) {
+        tag_cache_request_t entry = tag_table_->get_miss_entry(memref, block_size_);
 #ifdef HAS_ZLIB
-    gzprintf(file_, "0x%zx,0x%zx\n", pc, addr);
+        gzwrite(file_, &entry, sizeof(entry));
 #else
-    fprintf(file_, "0x%zx,0x%zx\n", pc, addr);
+        fwrite(&entry, sizeof(entry), 1, file_);
 #endif
+    } else {
+#ifdef HAS_ZLIB
+        gzprintf(file_, "0x%zx,0x%zx\n", pc, addr);
+#else
+        fprintf(file_, "0x%zx,0x%zx\n", pc, addr);
+#endif
+    }
 }
 
 void

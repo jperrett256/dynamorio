@@ -45,6 +45,7 @@
 #    include <zlib.h>
 #endif
 #include "memref.h"
+#include "tag_table.h"
 
 enum invalidation_type_t {
     INVALIDATION_INCLUSIVE,
@@ -153,7 +154,8 @@ class caching_device_stats_t {
 public:
     explicit caching_device_stats_t(const std::string &miss_file, int block_size,
                                     bool warmup_enabled = false,
-                                    bool is_coherent = false);
+                                    bool is_coherent = false,
+                                    tag_table_t *tag_table = NULL);
     virtual ~caching_device_stats_t();
 
     // Called on each access.
@@ -229,6 +231,9 @@ protected:
 
     // Print out write invalidations if cache is coherent.
     bool is_coherent_;
+
+    tag_table_t *tag_table_;
+    int block_size_;
 
     // References to the properties with statistics are held in the map with the
     // statistic name as the key. Sample map element: {HITS, num_hits_}

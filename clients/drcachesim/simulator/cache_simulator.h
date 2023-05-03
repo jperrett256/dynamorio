@@ -42,6 +42,7 @@
 #include "cache_stats.h"
 #include "cache.h"
 #include "snoop_filter.h"
+#include "tag_table.h"
 #include <limits.h>
 
 enum class cache_split_t { DATA, INSTRUCTION };
@@ -108,6 +109,8 @@ protected:
     std::unordered_map<std::string, cache_t *> all_caches_;   // All caches.
     // This is a list of non-coherent caches for shared caches above snoop filter.
     std::unordered_map<std::string, cache_t *> non_coherent_caches_;
+
+    tag_table_t tag_table_;
 
     // Snoop filter tracks ownership of cache lines across private caches.
     snoop_filter_t *snoop_filter_ = nullptr;

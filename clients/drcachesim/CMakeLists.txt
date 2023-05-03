@@ -120,6 +120,7 @@ add_exported_library(drmemtrace_simulator STATIC
   simulator/snoop_filter.cpp
   simulator/tlb.cpp
   simulator/tlb_simulator.cpp
+  simulator/tag_table.cpp
   )
 
 add_exported_library(directory_iterator STATIC common/directory_iterator.cpp)

@@ -38,11 +38,13 @@
 
 #include <string>
 #include "caching_device_stats.h"
+#include "tag_table.h"
 
 class cache_stats_t : public caching_device_stats_t {
 public:
     explicit cache_stats_t(int block_size, const std::string &miss_file = "",
-                           bool warmup_enabled = false, bool is_coherent = false);
+                           bool warmup_enabled = false, bool is_coherent = false,
+                           tag_table_t *tag_table = NULL);
 
     // In addition to caching_device_stats_t::access,
     // cache_stats_t::access processes prefetching requests.
