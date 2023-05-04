@@ -32,6 +32,7 @@ public:
 
 private:
     std::unordered_map<addr_t, bool> table_;
+    int8_t current_tag_ = -1;
 };
 
 #endif /* _TAG_TABLE_H_ */

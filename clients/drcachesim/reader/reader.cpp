@@ -99,8 +99,6 @@ reader_t::operator++()
             cur_ref_.data.tid = cur_tid_;
             cur_ref_.data.type = (trace_type_t)input_entry_->type;
             cur_ref_.data.size = input_entry_->size;
-            cur_ref_.data.tag_cheri = input_entry_->tag_cheri;
-            cur_ref_.data.cap_access = input_entry_->cap_access;
             cur_ref_.data.addr = input_entry_->addr;
             // The trace stream always has the instr fetch first, which we
             // use to obtain the PC for subsequent data references.
@@ -125,8 +123,6 @@ reader_t::operator++()
         case TRACE_TYPE_INSTR_SYSENTER:
         case TRACE_TYPE_INSTR_NO_FETCH:
             assert(cur_tid_ != 0 && cur_pid_ != 0);
-            assert(input_entry_->tag_cheri == 0);
-            assert(!input_entry_->cap_access);
             if (input_entry_->size == 0) {
                 // Just an entry to tell us the PC of the subsequent memref,
                 // used with -L0_filter where we don't reliably have icache

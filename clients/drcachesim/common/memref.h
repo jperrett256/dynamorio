@@ -36,7 +36,6 @@
 #define _MEMREF_H_ 1
 
 #include <stdint.h>
-#include <stdbool.h>
 #include <stddef.h> // for size_t
 #include "trace_entry.h"
 
@@ -58,8 +57,6 @@ struct _memref_data_t {
     addr_t addr;       /**< Address of data being loaded or stored. */
     size_t size;       /**< Size of data being loaded or stored. */
     addr_t pc;         /**< Program counter of instruction performing load or store. */
-    int8_t tag_cheri;  /**< CHERI tag. Either 0, 1, or (if unknown) -1. */
-    bool cap_access;   /**< Flag indicating if this is a capability access. */
 };
 
 /** A trace entry representing an instruction fetch. */

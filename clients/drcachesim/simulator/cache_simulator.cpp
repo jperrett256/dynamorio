@@ -433,6 +433,8 @@ cache_simulator_t::process_memref(const memref_t &memref)
         return false;
 
     if (memref.marker.type == TRACE_TYPE_MARKER) {
+        tag_table_.update(memref);
+
         // We ignore markers before we ask core_for_thread, to avoid asking
         // too early on a timestamp marker.
         if (knobs_.verbose >= 3) {

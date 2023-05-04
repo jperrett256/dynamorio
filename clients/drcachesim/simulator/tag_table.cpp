@@ -9,10 +9,22 @@
 void
 tag_table_t::update(const memref_t &memref)
 {
+    if (memref.marker.type == TRACE_TYPE_MARKER) {
+        if (memref.marker.marker_type == TRACE_MARKER_TYPE_TAG_CHERI) {
+            addr_t tag_value = memref.marker.marker_value;
+            // TODO output error messages instead?
+            assert(tag_value == 0 || tag_value == 1);
+            assert(current_tag_ == -1);
+            current_tag_ = (int8_t) tag_value;
+        }
+        return;
+    }
+
     bool tag;
     addr_t memref_addr;
     size_t memref_size;
     if (type_is_instr(memref.instr.type)) {
+        assert(current_tag_ == 0 || current_tag_ == -1);
         tag = false;
 
         memref_addr = memref.instr.addr;
@@ -20,15 +32,14 @@ tag_table_t::update(const memref_t &memref)
     } else if (memref.data.type == TRACE_TYPE_READ ||
         memref.data.type == TRACE_TYPE_WRITE || type_is_prefetch(memref.data.type)) {
 
-        if (memref.data.type == TRACE_TYPE_READ && !memref.data.cap_access) {
-            // do not know tags for non-capability loads
-            assert(memref.data.tag_cheri == -1);
-            return;
-        }
+        // cannot be a write in which we don't know something about the tag
+        assert(memref.data.type != TRACE_TYPE_WRITE || current_tag_ != -1);
 
-        assert(memref.data.tag_cheri == 0 || memref.data.tag_cheri == 1);
-        assert(memref.data.tag_cheri == 0 || memref.data.cap_access);
-        tag = (memref.data.tag_cheri == 1);
+        if (current_tag_ == -1)
+            return; // we do not know tag values for non-capability loads, for example
+
+        assert(current_tag_ == 0 || current_tag_ == 1);
+        tag = (current_tag_ == 1);
 
         // not outputting prefetch instructions at the moment from QEMU / tracesim tool
         // just remove this assertion if you are
@@ -48,6 +59,8 @@ tag_table_t::update(const memref_t &memref)
 
         table_[addr] = tag;
     }
+
+    current_tag_ = -1; // finished using current tag
 }
 
 tag_cache_request_t
