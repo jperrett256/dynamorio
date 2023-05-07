@@ -54,12 +54,18 @@ cache_lru_t::init(int associativity, int block_size, int total_size,
         return false;
 
     // Initialize line counters with 0, 1, 2, ..., associativity - 1.
-    for (int i = 0; i < blocks_per_set_; i++) {
+    for (int i = 0; i < num_sets_; i++) {
         for (int way = 0; way < associativity_; ++way) {
             get_caching_device_block(i << assoc_bits_, way).counter_ = way;
         }
     }
     return true;
+}
+
+void
+cache_lru_t::invalidate_update(caching_device_block_t *block)
+{
+    // Leave counters unchanged for LRU.
 }
 
 void
