@@ -41,6 +41,9 @@
 #ifdef HAS_SNAPPY
 #    include "reader/snappy_file_reader.h"
 #endif
+#ifdef HAS_LZ4
+#    include "reader/lz4_file_reader.h"
+#endif
 #include "common/utils.h"
 
 #ifdef HAS_ZLIB
@@ -62,7 +65,7 @@ analyzer_t::analyzer_t()
     /* Nothing else: child class needs to initialize. */
 }
 
-#ifdef HAS_SNAPPY
+#if defined(HAS_SNAPPY) || defined(HAS_LZ4)
 static bool
 ends_with(const std::string &str, const std::string &with)
 {
@@ -76,6 +79,28 @@ ends_with(const std::string &str, const std::string &with)
 static std::unique_ptr<reader_t>
 get_reader(const std::string &path, int verbosity)
 {
+#ifdef HAS_LZ4
+    if (ends_with(path, ".lz4"))
+        return std::unique_ptr<reader_t>(new lz4_file_reader_t(path, verbosity));
+    // If path is a directory, and any file in it ends in .lz4, return an lz4 reader.
+    if (directory_iterator_t::is_directory(path)) {
+        directory_iterator_t end;
+        directory_iterator_t iter(path);
+        if (!iter) {
+            ERRMSG("Failed to list directory %s: %s", path.c_str(),
+                   iter.error_string().c_str());
+            return nullptr;
+        }
+        for (; iter != end; ++iter) {
+            if (ends_with(*iter, ".lz4")) {
+                return std::unique_ptr<reader_t>(
+                    new lz4_file_reader_t(path, verbosity));
+            }
+        }
+    }
+#endif
+
+    // No lz4 support, or didn't find a .lz4 file, try snappy.
 #ifdef HAS_SNAPPY
     if (ends_with(path, ".sz"))
         return std::unique_ptr<reader_t>(new snappy_file_reader_t(path, verbosity));
@@ -96,6 +121,7 @@ get_reader(const std::string &path, int verbosity)
         }
     }
 #endif
+
     // No snappy support, or didn't find a .sz file, try the default reader.
     return std::unique_ptr<reader_t>(new default_file_reader_t(path, verbosity));
 }

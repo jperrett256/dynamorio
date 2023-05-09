@@ -78,6 +78,11 @@ endif()
 
 if (liblz4)
   add_definitions(-DHAS_LZ4)
+  set(lz4_reader
+    reader/lz4_file_reader.cpp
+    )
+else ()
+  set(lz4_reader "")
 endif ()
 
 set(client_and_sim_srcs
@@ -168,6 +173,7 @@ set(drcachesim_srcs
   reader/file_reader.cpp
   ${zlib_reader}
   ${snappy_reader}
+  ${lz4_reader}
   reader/ipc_reader.cpp
   simulator/analyzer_interface.cpp
   tracer/instru.cpp
@@ -184,6 +190,9 @@ target_link_libraries(drcachesim drmemtrace_simulator drmemtrace_reuse_distance
   drmemtrace_raw2trace directory_iterator)
 if (libsnappy)
   target_link_libraries(drcachesim snappy)
+endif ()
+if (liblz4)
+  target_link_libraries(drcachesim lz4)
 endif ()
 # To avoid dup symbol errors between drinjectlib and drdecode on Windows we have
 # to explicitly list drdecode up front:
@@ -208,10 +217,14 @@ add_exported_library(drmemtrace_analyzer STATIC
   reader/file_reader.cpp
   ${zlib_reader}
   ${snappy_reader}
+  ${lz4_reader}
   )
 target_link_libraries(drmemtrace_analyzer directory_iterator)
 if (libsnappy)
   target_link_libraries(drmemtrace_analyzer snappy)
+endif ()
+if (liblz4)
+  target_link_libraries(drmemtrace_analyzer lz4)
 endif ()
 link_with_pthread(drmemtrace_analyzer)
 # We get away w/ exporting the generically-named "utils.h" by putting into a
