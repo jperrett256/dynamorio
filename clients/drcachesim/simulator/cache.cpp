@@ -71,8 +71,15 @@ cache_t::flush(const memref_t &memref)
     last_tag_ = TAG_INVALID;
     for (; tag <= final_tag; ++tag) {
         auto block_way = find_caching_device_block(tag);
-        if (block_way.first == nullptr)
+        caching_device_block_t *cache_block = block_way.first;
+        if (cache_block == nullptr)
             continue;
+        if (cache_block->dirty_) {
+            if (parent_)
+                parent_->write_back(tag);
+            if (stats_)
+                stats_->write_back(tag);
+        }
         invalidate_caching_device_block(block_way.first);
     }
     // We flush parent_'s code cache here.

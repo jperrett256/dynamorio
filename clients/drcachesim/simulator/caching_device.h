@@ -69,6 +69,8 @@ public:
     request(const memref_t &memref);
     virtual void
     invalidate(addr_t tag, invalidation_type_t invalidation_type_);
+    virtual void
+    write_back(addr_t tag);
     bool
     contains_tag(addr_t tag);
     void
@@ -158,6 +160,7 @@ protected:
         if (use_tag2block_table_)
             tag2block.erase(block->tag_);
         block->tag_ = TAG_INVALID;
+        block->dirty_ = false;
 
         invalidate_update(block); // updates counters according to replacement policy
     }

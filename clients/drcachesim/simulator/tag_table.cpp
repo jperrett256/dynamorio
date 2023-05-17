@@ -64,6 +64,43 @@ tag_table_t::update(const memref_t &memref)
 }
 
 tag_cache_request_t
+tag_table_t::get_write_back_entry(const addr_t block_addr, const int block_size) const
+{
+    assert(block_size > 0);
+    assert(block_size % CAP_SIZE_BYTES == 0);
+    assert(IS_POWER_OF_2(block_size));
+    assert(block_addr % block_size == 0);
+
+    const addr_t start_addr = block_addr;
+    const addr_t final_addr = block_addr + block_size;
+
+    tag_cache_request_t entry = {0};
+    entry.type = TAG_CACHE_REQUEST_TYPE_WRITE;
+    entry.size = block_size;
+    entry.addr = start_addr;
+
+    uint16_t i = 0;
+    for (addr_t addr = start_addr; addr < final_addr; addr += CAP_SIZE_BYTES, i++) {
+        assert(i < sizeof(entry.tags) * 8);
+        assert(i < block_size / CAP_SIZE_BYTES);
+
+        assert(addr % CAP_SIZE_BYTES == 0);
+        auto table_entry = table_.find(addr);
+        if (table_entry != table_.end()) {
+            assert((entry.tags & (1 << i)) == 0);
+            assert((entry.tags_known & (1 << i)) == 0);
+
+            bool tag = table_entry->second;
+            if (tag)
+                entry.tags |= (1 << i);
+            entry.tags_known |= (1 << i);
+        }
+    }
+
+    return entry;
+}
+
+tag_cache_request_t
 tag_table_t::get_miss_entry(const memref_t &memref, const int block_size) const
 {
     addr_t memref_addr;

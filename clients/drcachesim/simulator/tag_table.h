@@ -28,6 +28,9 @@ public:
     update(const memref_t &memref);
 
     tag_cache_request_t
+    get_write_back_entry(const addr_t block_addr, const int block_size) const;
+
+    tag_cache_request_t
     get_miss_entry(const memref_t &memref, const int block_size) const;
 
 private:

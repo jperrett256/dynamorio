@@ -37,6 +37,7 @@
 #define _CACHING_DEVICE_BLOCK_H_ 1
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "memref.h"
 
 // Assuming a block of a caching device represents a memory space of at least 4-byte,
@@ -52,6 +53,7 @@ public:
     caching_device_block_t()
         : tag_(TAG_INVALID)
         , counter_(0)
+        , dirty_(false)
     {
     }
     // Destructor must be virtual and default is not.
@@ -65,6 +67,8 @@ public:
     // A 32-bit counter should be sufficient but we may want to revisit.
     // We already have stdint.h so we can reinstate int_least64_t easily.
     int counter_; // for use by replacement policies
+
+    bool dirty_;
 };
 
 #endif /* _CACHING_DEVICE_BLOCK_H_ */

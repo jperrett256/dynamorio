@@ -169,6 +169,9 @@ public:
     child_access(const memref_t &memref, bool hit, caching_device_block_t *cache_block);
 
     virtual void
+    write_back(addr_t tag);
+
+    virtual void
     print_stats(std::string prefix);
 
     virtual void
@@ -208,6 +211,8 @@ protected:
     print_child_stats(std::string prefix); // child/total info
 
     virtual void
+    dump_write_back(addr_t addr);
+    virtual void
     dump_miss(const memref_t &memref);
 
     void
@@ -217,6 +222,7 @@ protected:
     int_least64_t num_misses_;
     int_least64_t num_compulsory_misses_;
     int_least64_t num_child_hits_;
+    int_least64_t num_write_backs_;
 
     int_least64_t num_inclusive_invalidates_;
     int_least64_t num_coherence_invalidates_;

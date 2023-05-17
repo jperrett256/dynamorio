@@ -44,6 +44,7 @@ caching_device_stats_t::caching_device_stats_t(const std::string &miss_file,
     , num_misses_(0)
     , num_compulsory_misses_(0)
     , num_child_hits_(0)
+    , num_write_backs_(0)
     , num_inclusive_invalidates_(0)
     , num_coherence_invalidates_(0)
     , num_hits_at_reset_(0)
@@ -141,27 +142,53 @@ caching_device_stats_t::check_compulsory_miss(addr_t addr)
 }
 
 void
+caching_device_stats_t::write_back(addr_t tag)
+{
+    num_write_backs_++;
+
+    if (dump_misses_)
+        dump_write_back(tag);
+}
+
+void
+caching_device_stats_t::dump_write_back(addr_t tag)
+{
+    if (tag_table_) {
+        tag_cache_request_t entry =
+            tag_table_->get_write_back_entry(tag * block_size_, block_size_);
+
+#ifdef HAS_ZLIB
+        gzwrite(file_, &entry, sizeof(entry));
+#else
+        fwrite(&entry, sizeof(entry), 1, file_);
+#endif
+    }
+}
+
+void
 caching_device_stats_t::dump_miss(const memref_t &memref)
 {
-    addr_t pc, addr;
-    if (type_is_instr(memref.instr.type))
-        pc = memref.instr.addr;
-    else { // data ref: others shouldn't get here
-        assert(type_is_prefetch(memref.data.type) ||
-               memref.data.type == TRACE_TYPE_READ ||
-               memref.data.type == TRACE_TYPE_WRITE);
-        pc = memref.data.pc;
-    }
-    addr = memref.data.addr;
-
     if (tag_table_) {
+        // TODO write back entries as well?
         tag_cache_request_t entry = tag_table_->get_miss_entry(memref, block_size_);
+
 #ifdef HAS_ZLIB
         gzwrite(file_, &entry, sizeof(entry));
 #else
         fwrite(&entry, sizeof(entry), 1, file_);
 #endif
     } else {
+        addr_t pc, addr;
+        if (type_is_instr(memref.instr.type))
+            pc = memref.instr.addr;
+        else { // data ref: others shouldn't get here
+            assert(type_is_prefetch(memref.data.type) ||
+                   memref.data.type == TRACE_TYPE_READ ||
+                   memref.data.type == TRACE_TYPE_WRITE);
+            pc = memref.data.pc;
+        }
+        addr = memref.data.addr;
+
 #ifdef HAS_ZLIB
         gzprintf(file_, "0x%zx,0x%zx\n", pc, addr);
 #else
@@ -189,6 +216,9 @@ caching_device_stats_t::print_counts(std::string prefix)
     std::cerr << prefix << std::setw(18) << std::left
               << "Compulsory misses:" << std::setw(20) << std::right
               << num_compulsory_misses_ << std::endl;
+    std::cerr << prefix << std::setw(18) << std::left << "Write backs:" << std::setw(20)
+              << std::right << num_write_backs_ << std::endl;
+
     if (is_coherent_) {
         std::cerr << prefix << std::setw(21) << std::left
                   << "Parent invalidations:" << std::setw(17) << std::right

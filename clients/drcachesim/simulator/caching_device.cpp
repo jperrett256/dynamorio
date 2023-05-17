@@ -223,11 +223,22 @@ caching_device_t::request(const memref_t &memref_in)
                         }
                     }
                 }
+
+                if (cache_block->dirty_) {
+                    if (parent_ != NULL)
+                        parent_->write_back(victim_tag);
+                    stats_->write_back(victim_tag);
+                }
+                cache_block->dirty_ = false;
             }
+            assert(!cache_block->dirty_);
             update_tag(cache_block, way, tag);
         }
 
         access_update(block_idx, way);
+
+        if (memref.data.type == TRACE_TYPE_WRITE)
+            get_caching_device_block(block_idx, way).dirty_ = true;
 
         // Issue a hardware prefetch, if any, before we remember the last tag,
         // so we remember this line and not the prefetched line.
@@ -292,12 +303,45 @@ caching_device_t::get_next_way_to_replace(const int block_idx) const
 }
 
 void
-caching_device_t::invalidate(addr_t tag, invalidation_type_t invalidation_type)
+caching_device_t::write_back(addr_t tag)
 {
     auto block_way = find_caching_device_block(tag);
+    caching_device_block_t *cache_block = block_way.first;
+
+    if (!cache_block) {
+        assert(!inclusive_);
+
+        int block_idx = compute_block_idx(tag);
+        int way = replace_which_way(block_idx);
+
+        cache_block = &get_caching_device_block(block_idx, way);
+        addr_t victim_tag = cache_block->tag_;
+
+        if (parent_)
+            parent_->write_back(victim_tag);
+        stats_->write_back(victim_tag);
+
+        cache_block->tag_ = tag;
+    }
+
+    assert(cache_block->tag_ == tag);
+    cache_block->dirty_ = true;
+
+    // NOTE assuming write backs do not affect replacement policy counters
+}
+
+void
+caching_device_t::invalidate(addr_t tag, invalidation_type_t invalidation_type)
+{
+    // If this is a coherence invalidation, we must invalidate children caches.
+    if (invalidation_type == INVALIDATION_COHERENCE && !children_.empty()) {
+        for (auto &child : children_) {
+            child->invalidate(tag, invalidation_type);
+        }
+    }
+
+    auto block_way = find_caching_device_block(tag);
     if (block_way.first != nullptr) {
-        invalidate_caching_device_block(block_way.first);
-        stats_->invalidate(invalidation_type);
         // Invalidate last_tag_ if it was this tag.
         if (last_tag_ == tag) {
             last_tag_ = TAG_INVALID;
@@ -309,12 +353,18 @@ caching_device_t::invalidate(addr_t tag, invalidation_type_t invalidation_type)
                 child->invalidate(tag, invalidation_type);
             }
         }
-    }
-    // If this is a coherence invalidation, we must invalidate children caches.
-    if (invalidation_type == INVALIDATION_COHERENCE && !children_.empty()) {
-        for (auto &child : children_) {
-            child->invalidate(tag, invalidation_type);
+
+        if (block_way.first->dirty_) {
+            if (parent_) {
+                assert(invalidation_type != INVALIDATION_INCLUSIVE ||
+                    parent_->inclusive_);
+                parent_->write_back(tag);
+            }
+            stats_->write_back(tag);
         }
+
+        invalidate_caching_device_block(block_way.first);
+        stats_->invalidate(invalidation_type);
     }
 }
 
