@@ -19,7 +19,7 @@ struct tag_cache_request_t
     uint16_t size; // just the cache line size
     uint16_t tags; // number of tags depends on cache line size
     uint16_t tags_known; // mask indicating which tags are actually known
-    uint64_t paddr;
+    uint64_t addr;
 };
 
 class tag_table_t {
