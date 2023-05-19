@@ -169,7 +169,6 @@ void
 caching_device_stats_t::dump_miss(const memref_t &memref)
 {
     if (tag_table_) {
-        // TODO write back entries as well?
         tag_cache_request_t entry = tag_table_->get_miss_entry(memref, block_size_);
 
 #ifdef HAS_ZLIB

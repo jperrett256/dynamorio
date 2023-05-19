@@ -177,16 +177,6 @@ caching_device_t::request(const memref_t &memref_in)
             caching_device_block_t *cache_block =
                 &get_caching_device_block(block_idx, way);
 
-            record_access_stats(memref, false /*miss*/, cache_block);
-            missed = true;
-            // If no parent we assume we get the data from main memory
-            if (parent_ != NULL)
-                parent_->request(memref);
-            if (snoop_filter_ != NULL) {
-                // Update snoop filter, other private caches invalidated on write.
-                snoop_filter_->snoop(tag, id_, (memref.data.type == TRACE_TYPE_WRITE));
-            }
-
             addr_t victim_tag = cache_block->tag_;
             // Check if we are inserting a new block, if we are then increment
             // the block loaded count.
@@ -232,6 +222,18 @@ caching_device_t::request(const memref_t &memref_in)
                 cache_block->dirty_ = false;
             }
             assert(!cache_block->dirty_);
+
+            record_access_stats(memref, false /*miss*/, cache_block);
+            missed = true;
+            // If no parent we assume we get the data from main memory
+            if (parent_ != NULL)
+                parent_->request(memref);
+            // TODO where should the snoop stuff be?
+            if (snoop_filter_ != NULL) {
+                // Update snoop filter, other private caches invalidated on write.
+                snoop_filter_->snoop(tag, id_, (memref.data.type == TRACE_TYPE_WRITE));
+            }
+
             update_tag(cache_block, way, tag);
         }
 
