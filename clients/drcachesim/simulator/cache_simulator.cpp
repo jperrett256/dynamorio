@@ -464,8 +464,6 @@ cache_simulator_t::process_memref(const memref_t &memref)
         simref = &phys_memref;
     }
 
-    tag_table_.update(*simref);
-
     if (type_is_instr(simref->instr.type) ||
         simref->instr.type == TRACE_TYPE_PREFETCH_INSTR) {
         if (knobs_.verbose >= 3) {
@@ -517,6 +515,8 @@ cache_simulator_t::process_memref(const memref_t &memref)
         error_string_ = "Unhandled memref type " + std::to_string(simref->data.type);
         return false;
     }
+
+    tag_table_.update(*simref);
 
     // reset cache stats when warming up is completed
     if (!is_warmed_up_ && check_warmed_up()) {
