@@ -32,17 +32,22 @@ tag_table_t::update(const memref_t &memref)
     } else if (memref.data.type == TRACE_TYPE_READ ||
         memref.data.type == TRACE_TYPE_WRITE || type_is_prefetch(memref.data.type)) {
 
-        // cannot be a write in which we don't know something about the tag
-        assert(memref.data.type != TRACE_TYPE_WRITE || current_tag_ != -1);
+        if (current_tag_ == -1) {
+            // non-capability load or store
+            if (memref.data.type == TRACE_TYPE_WRITE) {
+                // tags are omitted for non-capability stores, as they always clear it
+                tag = false;
+            } else {
+                // we do not know tag values for non-capability loads, nothing to do
+                return;
+            }
+        } else {
+            assert(current_tag_ == 0 || current_tag_ == 1);
+            tag = (current_tag_ == 1);
+        }
 
-        if (current_tag_ == -1)
-            return; // we do not know tag values for non-capability loads, for example
-
-        assert(current_tag_ == 0 || current_tag_ == 1);
-        tag = (current_tag_ == 1);
-
-        // not outputting prefetch instructions at the moment from QEMU / tracesim tool
-        // just remove this assertion if you are
+        /* not outputting prefetch instructions at the moment from
+         * QEMU-CHERI / traceconv tool, just remove this assertion if you are */
         assert(!type_is_prefetch(memref.data.type));
 
         memref_addr = memref.data.addr;
