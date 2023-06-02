@@ -369,7 +369,11 @@ typedef enum {
      */
     TRACE_MARKER_TYPE_PAGE_SIZE,
 
+    /**
+     * The marker value contains the tag for following memory access.
+     */
     TRACE_MARKER_TYPE_TAG_CHERI,
+
     // ...
     // These values are reserved for future built-in marker types.
     // ...

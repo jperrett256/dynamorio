@@ -118,6 +118,7 @@ get_cache_simulator_knobs()
     knobs->LL_assoc = op_LL_assoc.get_value();
     knobs->LL_miss_file = op_LL_miss_file.get_value();
     knobs->model_coherence = op_coherence.get_value();
+    knobs->use_cheri_tags = op_use_cheri_tags.get_value();
     knobs->replace_policy = op_replace_policy.get_value();
     knobs->data_prefetcher = op_data_prefetcher.get_value();
     knobs->skip_refs = op_skip_refs.get_value();

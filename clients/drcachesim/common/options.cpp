@@ -204,8 +204,15 @@ droption_t<bool> op_instr_only_trace(
     "trace and data entries are omitted.");
 
 droption_t<bool> op_coherence(
-    DROPTION_SCOPE_FRONTEND, "coherence", false, "Model coherence for private caches",
+    DROPTION_SCOPE_ALL, "coherence", false, "Model coherence for private caches",
     "Writes to cache lines will invalidate other private caches that hold that line.");
+
+droption_t<bool> op_use_cheri_tags(
+    DROPTION_SCOPE_CLIENT, "use_cheri_tags", false, "Maintain CHERI tag state.",
+    "This only affects output if miss files are used. The miss files will emit write"
+    "traffic in addition to read traffic (making them outgoing requests files), and"
+    "will include CHERI tag data as well. CHERI tags values are inserted in the trace"
+    "using #TRACE_MARKER_TYPE_TAG_CHERI markers.");
 
 droption_t<bool> op_use_physical(
     DROPTION_SCOPE_ALL, "use_physical", false, "Use physical addresses if possible",

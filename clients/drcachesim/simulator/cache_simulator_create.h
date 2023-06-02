@@ -60,6 +60,7 @@ struct cache_simulator_knobs_t {
         , LL_assoc(16)
         , LL_miss_file("")
         , model_coherence(false)
+        , use_cheri_tags(false)
         , replace_policy("LRU")
         , data_prefetcher("nextline")
         , skip_refs(0)
@@ -81,6 +82,7 @@ struct cache_simulator_knobs_t {
     unsigned int LL_assoc;
     std::string LL_miss_file;
     bool model_coherence;
+    bool use_cheri_tags;
     std::string replace_policy;
     std::string data_prefetcher;
     uint64_t skip_refs;
