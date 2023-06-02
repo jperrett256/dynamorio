@@ -285,6 +285,7 @@ caching_device_stats_t::reset()
     num_misses_ = 0;
     num_compulsory_misses_ = 0;
     num_child_hits_ = 0;
+    num_write_backs_ = 0;
     num_inclusive_invalidates_ = 0;
     num_coherence_invalidates_ = 0;
 }
